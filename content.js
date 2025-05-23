@@ -1,31 +1,80 @@
+// Content script for audio bridge with virtual microphone functionality
 console.log('Content script loaded.');
 
-// Inject the script that will override Web Audio APIs
-function injectScript(filePath) {
+// Inject the virtual-microphone.js script into the page
+function injectVirtualMicrophoneScript() {
   const script = document.createElement('script');
-  script.setAttribute('type', 'text/javascript');
-  script.setAttribute('src', filePath);
+  script.src = chrome.runtime.getURL('virtual-microphone.js');
+  script.onload = function() {
+    console.log('Virtual microphone script injected successfully');
+    this.remove(); // Remove the script element after it's loaded
+  };
   (document.head || document.documentElement).appendChild(script);
-  script.onload = () => {
-    console.log('Inject script loaded:', filePath);
-    // script.remove(); // Keep the script tag for easier debugging of inject-script itself, or remove if preferred
-  };
-  script.onerror = (e) => {
-    console.error('Error injecting script:', filePath, e);
-  };
 }
 
-injectScript(chrome.runtime.getURL('inject-script.js'));
+// Inject the script as early as possible
+injectVirtualMicrophoneScript();
 
-// Listen for messages from the background script (originating from sidepanel.js)
+// Handle messages directly from the side panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // console.log("Content.js: Received message from background/popup:", message.type);
-  if (message.type === 'AUDIO_DATA_FROM_BACKGROUND') {
-    // Forward the message to the injected script
-    window.postMessage(message, '*');
+  console.log('Received message from side panel:', message.type);
+  
+  // Handle PCM data message
+  if (message.type === 'PCM_DATA') {
+    // Log chunk information
+    if (message.chunkIndex !== undefined) {
+      console.log(`Received PCM chunk ${message.chunkIndex + 1}/${message.totalChunks}, size: ${message.pcmData.length}`);
+    }
+    
+    // Convert array back to Int16Array for processing
+    const pcmData = new Int16Array(message.pcmData);
+    
+    // Forward PCM data to the page's virtual microphone
+    window.postMessage({
+      type: 'VIRTUAL_MIC_PCM_DATA',
+      pcmData: pcmData,
+      chunkIndex: message.chunkIndex,
+      totalChunks: message.totalChunks,
+      sampleRate: message.sampleRate,
+      trackId: message.trackId
+    }, '*');
+    
+    sendResponse({ success: true });
+    return true;
   }
-  // No sendResponse needed here as this is a one-way message from background to inject
-  return false; 
+  
+  // Handle virtual mic enabled/disabled message
+  if (message.type === 'VIRTUAL_MIC_ENABLED') {
+    console.log('Virtual microphone ' + (message.enabled ? 'enabled' : 'disabled'));
+    // Forward mic state to the page
+    window.postMessage({
+      type: 'VIRTUAL_MIC_STATE',
+      enabled: message.enabled
+    }, '*');
+    sendResponse({ success: true });
+    return true;
+  }
+  
+  return false;
 });
 
-console.log('Content.js: Parameter negotiation logic removed.');
+// Listen for messages from the page
+window.addEventListener('message', (event) => {
+  // Only accept messages from the same frame
+  if (event.source !== window) return;
+  
+  // Check if it's a message for the content script
+  if (event.data.type === 'VIRTUAL_MIC_STATUS') {
+    console.log('Virtual microphone status:', event.data.active);
+    
+    // Forward status to side panel if connected
+    if (sidePanel) {
+      sidePanel.postMessage({
+        type: 'VIRTUAL_MIC_STATUS',
+        active: event.data.active
+      });
+    }
+  }
+});
+
+console.log('Virtual microphone bridge initialized');

@@ -1,5 +1,8 @@
 {
   "manifest_version": 3,
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
   "name": "Side Panel Audio Bridge",
   "version": "1.0",
   "description": "Pipes audio from a side panel to the main page.",
@@ -20,7 +23,18 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["inject-script.js", "test-tone.mp3"],
+      "resources": [
+        "inject-script.js", 
+        "test-tone.mp3",
+        "worklets/*",
+        "analysis/*",
+        "wav_packer.js",
+        "wav_recorder.js",
+        "wav_stream_player.js",
+        "lib/*",
+        "index.js",
+        "virtual-microphone.js"
+      ],
       "matches": ["<all_urls>"]
     }
   ],

@@ -3,10 +3,54 @@
 <head>
   <title>Side Panel Audio</title>
   <meta charset="utf-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    #play-button {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 24px;
+      border: none;
+      margin: 30px auto;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+    #play-button:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+    #play-button:active {
+      transform: scale(0.95);
+    }
+    #play-button.playing {
+      background-color: #f44336;
+    }
+    #status {
+      margin-top: 20px;
+      color: #666;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
-  <h1>Side Panel Audio Source</h1>
-  <p>This panel will capture audio to send to the main page.</p>
-  <script src="sidepanel.js"></script>
+  <h1>Side Panel Audio Player</h1>
+  <button id="play-button">PLAY</button>
+  <div id="status">Ready to play</div>
+  
+  <script type="module" src="sidepanel.js"></script>
 </body>
 </html>
