@@ -1,0 +1,2 @@
+tree -a -I '.git|node_modules|__pycache__|*.pyc' > tree_output.txt && cat tree_output.txt 
+rm tree_output.txt 
